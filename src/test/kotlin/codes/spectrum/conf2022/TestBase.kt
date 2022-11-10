@@ -36,7 +36,7 @@ abstract class TestBase(val filesToProcess: List<File>, val enabledByDefault: Bo
      * ПЕРЕД ЗАПУСКОМ ТЕСТОВ - ДОЛЖЕН БЫТЬ ЗАПОЛНЕН!
      * */
     val MY_LOGIN: String by lazy {
-        getUserLogin()
+        "huntereburg87"
     }
 
     /**
