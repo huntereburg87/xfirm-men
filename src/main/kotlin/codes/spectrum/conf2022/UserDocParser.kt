@@ -126,7 +126,7 @@ class UserDocParser : IDocParser {
         /**
          * Вот тут уже можете начинать свою реализацию боевого кода
          */
-        return listOf(getExactlyByType(input2.replace(" ","").replace("VIN","").replace("паспортилиВУ:","")))
+        return listOf(getExactlyByType(input2.replace(" ","").replace("VIN","")))
     }
 
 
