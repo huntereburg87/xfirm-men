@@ -29,10 +29,173 @@ class UserDocParser : IDocParser {
             return qualificationTests(input)
         }
 
+        if (input.matches(DocType.INN_FL.normaliseRegex)) {
+            val inn = validatePersonInn(input)
+            return listOf(ExtractedDocument(
+                docType = DocType.INN_FL,
+                isValid = !inn.startsWith("!"),
+                value = input,
+                isValidSetup = true,
+            ))
+        }
+
+        if (input.matches(DocType.INN_UL.normaliseRegex)) {
+            val inn = validateCompanyInn(input)
+            return listOf(ExtractedDocument(
+                docType = DocType.INN_UL,
+                isValid = !inn.startsWith("!"),
+                value = input,
+                isValidSetup = true,
+            ))
+        }
+
+        if (input.matches(DocType.OGRN.normaliseRegex)) {
+            val inn = validateOgrn(input)
+            return listOf(ExtractedDocument(
+                docType = DocType.OGRN,
+                isValid = !inn.startsWith("!"),
+                value = input,
+                isValidSetup = true,
+            ))
+        }
+
         /**
          * Вот тут уже можете начинать свою реализацию боевого кода
          */
+        return listOf(getExactlyByType(input))
+    }
 
+
+
+    fun validatePersonInn(value: String): String {
+        val normalized = digitsOnly(value)
+        return when {
+            calcControlValue(normalized, listOf(7, 2, 4, 10, 3, 5, 9, 4, 6, 8), this::sumModifier) != normalized[10].numericValue() ||
+                calcControlValue(normalized, listOf(3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8), this::sumModifier) != normalized[11].numericValue() -> "!" + value
+
+            else -> value
+        }
+    }
+    fun validateOgrn(value: String): String {
+        val normalized = digitsOnly(value)
+        return when {
+            normalized.take(12).toLong() % 11 % 10 != normalized[12].numericValue().toLong() -> "!" + value
+            else -> value
+        }
+    }
+    private fun sumModifier(sum: Int) = sum % 11 % 10
+    private fun digitsOnly(src: String? = null, minLen: Int? = null, filler: Char = '0'): String {
+        val cleaned = (src ?: "").replace("""\D""".toRegex(), "")
+        val result = StringBuffer()
+        minLen?.let {
+            if (cleaned.length < minLen) {
+                repeat(minLen - cleaned.length) {
+                    result.append(filler)
+                }
+            }
+        }
+        result.append(cleaned)
+        return result.toString()
+    }
+
+    private fun calcControlValue(value: String, coefficients: List<Int>, sumModifier: (Int) -> Int = { it }): Int =
+        coefficients.mapIndexed { i, c -> value[i].numericValue() * c }
+            .sum()
+            .let(sumModifier)
+
+
+    private fun Char.numericValue() = Character.getNumericValue(this)
+    private fun getExactlyByType(input: String): ExtractedDocument {
+        DocType.values().forEach {
+            if (input.matches(it.normaliseRegex)) {
+                return@getExactlyByType ExtractedDocument(
+                    docType = it,
+                    isValid = true,
+                    value = input,
+                    isValidSetup = true,
+                )
+            }
+
+        }
+        return ExtractedDocument(
+            docType = DocType.NOT_FOUND,
+            isValid = true,
+            value = input,
+            isValidSetup = true,
+        )
+    }
+
+    fun validateCompanyInn(value: String): String {
+        val normalized = digitsOnly(value)
+        return when {
+            calcControlValue(normalized, listOf(2, 4, 10, 3, 5, 9, 4, 6, 8), this::sumModifier) != normalized[9].numericValue() -> "!" + value
+            else -> value
+        }
+    }
+
+
+    private fun qualificationTests(input: String): List<ExtractedDocument> {
+        val normalized = input.trim('@').trim().replace("_", "").replace("-", "")
+
+        if (normalized.startsWith("BTT0")) {
+            return t0(normalized)
+        }
+
+        if (normalized.startsWith("BTT1")) {
+            return t1(normalized)
+        }
+
+        if (normalized.startsWith("BTT2")) {
+            return t2(normalized)
+        }
+
+
+        return emptyList()
+    }
+
+    private fun t2(input: String): List<ExtractedDocument> {
+        if (input.matches("^BTT2\\d{4}$".toRegex())) {
+            val valid = input.indexOf('5') != -1
+
+            return listOf(
+                ExtractedDocument(
+                    DocType.T2,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = valid
+                )
+            )
+        }
+
+        return emptyList()
+    }
+
+    private fun t1(input: String): List<ExtractedDocument> {
+        if (input.matches("^BTT1\\d{5}$".toRegex())) {
+            return listOf(
+                ExtractedDocument(
+                    DocType.T1,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = true
+                )
+            )
+        }
+
+        if (input.matches("^BTT1\\d{4}$".toRegex())) {
+            val f = input.substring(4)
+
+            val valid = f[0] == '5' && f.last() == '7'
+
+            return listOf(
+                ExtractedDocument(
+                    DocType.T1,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = valid
+                )
+            )
+        }
 
         return emptyList()
     }
@@ -90,72 +253,6 @@ class UserDocParser : IDocParser {
                 }
             }
         }
-
-        return emptyList()
-    }
-
-    private fun t1(input: String): List<ExtractedDocument> {
-        if (input.matches("^BTT1\\d{5}$".toRegex())) {
-            return listOf(
-                ExtractedDocument(
-                    DocType.T1,
-                    value = input,
-                    isValidSetup = true,
-                    isValid = true
-                )
-            )
-        }
-
-        if (input.matches("^BTT1\\d{4}$".toRegex())) {
-            val f = input.substring(4)
-
-            val valid = f[0] == '5' && f.last() == '7'
-
-            return listOf(
-                ExtractedDocument(
-                    DocType.T1,
-                    value = input,
-                    isValidSetup = true,
-                    isValid = valid
-                )
-            )
-        }
-
-        return emptyList()
-    }
-
-    private fun t2(input: String): List<ExtractedDocument> {
-        if (input.matches("^BTT2\\d{4}$".toRegex())) {
-            val valid = input.indexOf('5') != -1
-
-            return listOf(
-                ExtractedDocument(
-                    DocType.T2,
-                    value = input,
-                    isValidSetup = true,
-                    isValid = valid
-                )
-            )
-        }
-
-        return emptyList()
-    }
-
-    private fun qualificationTests(input: String): List<ExtractedDocument> {
-        val normalized = input.trim('@').trim().replace("_", "").replace("-", "")
-
-        if (normalized.startsWith("BTT0")) {
-            return t0(normalized)
-        }
-
-        if (normalized.startsWith("BTT1")) {
-            return t1(normalized)
-        }
-
-        if (normalized.startsWith("BTT2")) {
-            return t2(normalized)
-        }
-
 
         return emptyList()
     }
