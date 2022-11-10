@@ -49,6 +49,15 @@ class UserDocParser : IDocParser {
             ))
         }
 
+        if (input.matches(DocType.GRZ.normaliseRegex)) {
+            return listOf(ExtractedDocument(
+                docType = DocType.GRZ,
+                isValid = input.substring(6).toInt() > 0,
+                value = input,
+                isValidSetup = true,
+            ))
+        }
+
         if (input.matches(DocType.OGRN.normaliseRegex)) {
             val inn = validateOgrn(input)
             return listOf(ExtractedDocument(
