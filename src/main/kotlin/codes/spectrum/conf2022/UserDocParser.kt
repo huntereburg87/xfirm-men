@@ -10,13 +10,13 @@ import kotlin.random.Random
  *
  * контракт один - пустой конструктор и реализация [IDocParser]
  */
-class UserDocParser: IDocParser {
+class UserDocParser : IDocParser {
     override fun parse(input: String): List<ExtractedDocument> {
         /**
          * Это пример чтобы пройти совсем первый базовый тест, хардкод, но понятно API,
          * просто посмотрите preparedSampleTests для примера
          */
-        if(input.startsWith("BASE_SAMPLE1.")) {
+        if (input.startsWith("BASE_SAMPLE1.")) {
             return preparedSampleTests(input)
         }
         /**
@@ -25,7 +25,7 @@ class UserDocParser: IDocParser {
          * надо честно реализовать спеки по DocType.T1 и DocType.T2
          * мы их будем проверять секретными тестами!!!
          */
-        if(input.startsWith("@ ")) {
+        if (input.startsWith("@ ")) {
             return qualificationTests(input)
         }
 
@@ -33,11 +33,130 @@ class UserDocParser: IDocParser {
          * Вот тут уже можете начинать свою реализацию боевого кода
          */
 
+
+        return emptyList()
+    }
+
+    private fun t0(input: String): List<ExtractedDocument> {
+        if (input.matches("^BTT0\\d{5}$".toRegex())) {
+            return listOf(
+                ExtractedDocument(
+                    DocType.T1,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = true
+                )
+            )
+        }
+
+        if (input.matches("^BTT0\\d{4}$".toRegex())) {
+            val f = input.substring(4)
+
+            val isFiveExist = f.indexOf('5') != -1
+
+            val validT1 = f[0] == '5' && f.last() == '7'
+
+            if (isFiveExist) {
+                if (validT1) {
+                    return listOf(
+                        ExtractedDocument(
+                            DocType.T1,
+                            value = input,
+                            isValidSetup = true,
+                            isValid = true
+                        ),
+                        ExtractedDocument(
+                            DocType.T2,
+                            value = input,
+                            isValidSetup = true,
+                            isValid = true
+                        )
+                    )
+                } else {
+                    return listOf(
+                        ExtractedDocument(
+                            DocType.T2,
+                            value = input,
+                            isValidSetup = true,
+                            isValid = true
+                        ),
+                        ExtractedDocument(
+                            DocType.T1,
+                            value = input,
+                            isValidSetup = true,
+                            isValid = false
+                        )
+                    )
+                }
+            }
+        }
+
+        return emptyList()
+    }
+
+    private fun t1(input: String): List<ExtractedDocument> {
+        if (input.matches("^BTT1\\d{5}$".toRegex())) {
+            return listOf(
+                ExtractedDocument(
+                    DocType.T1,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = true
+                )
+            )
+        }
+
+        if (input.matches("^BTT1\\d{4}$".toRegex())) {
+            val f = input.substring(4)
+
+            val valid = f[0] == '5' && f.last() == '7'
+
+            return listOf(
+                ExtractedDocument(
+                    DocType.T1,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = valid
+                )
+            )
+        }
+
+        return emptyList()
+    }
+
+    private fun t2(input: String): List<ExtractedDocument> {
+        if (input.matches("^BTT2\\d{4}$".toRegex())) {
+            val valid = input.indexOf('5') != -1
+
+            return listOf(
+                ExtractedDocument(
+                    DocType.T2,
+                    value = input,
+                    isValidSetup = true,
+                    isValid = valid
+                )
+            )
+        }
+
         return emptyList()
     }
 
     private fun qualificationTests(input: String): List<ExtractedDocument> {
-        //TODO: вот тут надо пройти квалификацию по тестам из base.csv, которые начинаются на `@ BT...`
+        val normalized = input.trim('@').trim().replace("_", "").replace("-", "")
+
+        if (normalized.startsWith("BTT0")) {
+            return t0(normalized)
+        }
+
+        if (normalized.startsWith("BTT1")) {
+            return t1(normalized)
+        }
+
+        if (normalized.startsWith("BTT2")) {
+            return t2(normalized)
+        }
+
+
         return emptyList()
     }
 
