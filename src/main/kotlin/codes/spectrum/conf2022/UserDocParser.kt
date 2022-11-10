@@ -59,6 +59,21 @@ class UserDocParser : IDocParser {
             ))
         }
 
+        if (digitsOnly(input).matches(DocType.PASSPORT_RF.normaliseRegex)) {
+            val ii = digitsOnly(input)
+
+            val f = ii.substring(2, 4).toInt()
+            val valid = f < 23
+
+
+            return listOf(ExtractedDocument(
+                docType = DocType.PASSPORT_RF,
+                value = ii,
+                isValidSetup = true,
+                isValid = valid,
+            ))
+        }
+
         /**
          * Вот тут уже можете начинать свою реализацию боевого кода
          */
