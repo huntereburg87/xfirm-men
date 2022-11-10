@@ -98,7 +98,7 @@ class UserDocParser : IDocParser {
                 isValidSetup = true,
             ))
         }
-
+//
 //        if (digitsOnly(input).matches(DocType.PASSPORT_RF.normaliseRegex)) {
 //            val ii = digitsOnly(input)
 //
@@ -126,7 +126,7 @@ class UserDocParser : IDocParser {
         /**
          * Вот тут уже можете начинать свою реализацию боевого кода
          */
-        return listOf(getExactlyByType(input2))
+        return listOf(getExactlyByType(input2.replace(" ","").replace("VIN","").replace("паспортилиВУ:","")))
     }
 
 
